@@ -51,7 +51,9 @@ tar xzf "master.tar.gz"
 mv wger-master /home/wger/src
 cd /home/wger/src || exit
 $STD pip install . --ignore-installed --break-system-packages
-$STD DJANGO_SETTINGS_MODULE=settings wger create-settings --database-path /home/wger/db/database.sqlite
+export DJANGO_SETTINGS_MODULE=settings
+export PYTHONPATH=/home/wger/src
+$STD wger create-settings --database-path /home/wger/db/database.sqlite
 
 cat <<'EOF' >> /home/wger/src/settings.py
 
@@ -68,7 +70,7 @@ EOF
 
 sed -i "s#home/wger/src/media#home/wger/media#g" /home/wger/src/settings.py
 sed -i "/MEDIA_ROOT = '\/home\/wger\/media'/a STATIC_ROOT = '/home/wger/static'" /home/wger/src/settings.py
-$STD DJANGO_SETTINGS_MODULE=settings wger bootstrap
+$STD wger bootstrap
 $STD python3 manage.py collectstatic
 rm -rf "$temp_dir"
 # echo "${RELEASE}" >/opt/wger_version.txt
