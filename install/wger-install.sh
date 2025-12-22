@@ -36,6 +36,7 @@ NODE_VERSION="22" NODE_MODULE="sass" setup_nodejs
 
 msg_info "Enabling Corepack"
 corepack enable
+corepack disable yarn
 msg_ok "Corepack enabled"
 
 msg_info "Setting up wger"
