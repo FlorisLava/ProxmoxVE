@@ -50,6 +50,7 @@ curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.g
 tar xzf "master.tar.gz"
 mv wger-master /home/wger/src
 cd /home/wger/src || exit
+export DJANGO_SETTINGS_MODULE=settings
 $STD pip install . --ignore-installed --break-system-packages
 $STD wger create-settings --database-path /home/wger/db/database.sqlite
 
