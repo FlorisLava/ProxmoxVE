@@ -50,8 +50,9 @@ function update_script() {
     echo "${RELEASE}" >/opt/${APP}_version.txt
     msg_ok "Updated $APP to v${RELEASE}"
 
-    msg_info "Starting Service"
+    msg_info "Starting wger Service"
     systemctl start wger
+    msg_info "Starting Celery Services"
     systemctl start wger-celery wger-celery-beat 2>/dev/null || true
     msg_ok "Started Service"
     msg_ok "Updated successfully!"
