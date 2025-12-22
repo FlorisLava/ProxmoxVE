@@ -44,7 +44,7 @@ mkdir /home/wger/{static,media}
 chmod o+w /home/wger/media
 temp_dir=$(mktemp -d)
 cd "$temp_dir" || exit
-RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
+# RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
 # TEMP CHANGE FROM $RELEASE TO MASTER
 curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz" -o "master.tar.gz"
 tar xzf "master.tar.gz"
@@ -71,7 +71,8 @@ sed -i "/MEDIA_ROOT = '\/home\/wger\/media'/a STATIC_ROOT = '/home/wger/static'"
 $STD wger bootstrap
 $STD python3 manage.py collectstatic
 rm -rf "$temp_dir"
-echo "${RELEASE}" >/opt/wger_version.txt
+# echo "${RELEASE}" >/opt/wger_version.txt
+# echo "TEST" >/opt/wger_version.txt
 msg_ok "Finished setting up wger"
 
 msg_info "Creating Service"

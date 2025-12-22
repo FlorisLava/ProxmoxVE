@@ -27,8 +27,8 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
-  if [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]] || [[ ! -f /opt/${APP}_version.txt ]]; then
+  # RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
+  # if [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]] || [[ ! -f /opt/${APP}_version.txt ]]; then
     msg_info "Stopping Service"
     systemctl stop wger wger-celery wger-celery-beat 2>/dev/null || true
     msg_ok "Stopped Service"
@@ -55,9 +55,9 @@ function update_script() {
     systemctl start wger-celery wger-celery-beat 2>/dev/null || true
     msg_ok "Started Service"
     msg_ok "Updated successfully!"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
-  fi
+  # else
+  #   msg_ok "No update required. ${APP} is already at v${RELEASE}"
+  # fi
   exit
 }
 
