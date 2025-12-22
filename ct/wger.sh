@@ -40,7 +40,7 @@ function update_script() {
     tar xzf "$temp_file"
     cp -rf wger-master/* /home/wger/src
     cd /home/wger/src || exit
-    $STD pip install .
+    $STD pip install . --break-system-packages
     $STD python3 manage.py migrate
     $STD python3 manage.py collectstatic --no-input
     $STD yarn install
