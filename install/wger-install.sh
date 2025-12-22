@@ -32,7 +32,12 @@ systemctl enable --now redis-server
 
 redis-cli ping | grep -qP '^PONG$' && msg_ok "Redis is running" || msg_error "Redis is not running"
 
-NODE_VERSION="22" NODE_MODULE="yarn,sass" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="sass" setup_nodejs
+
+msg_info "Enabling Corepack"
+corepack enable
+msg_ok "Corepack enabled"
+corepack prepare yarn@10.5.0 --activate
 
 msg_info "Setting up wger"
 $STD adduser wger --disabled-password --gecos ""
