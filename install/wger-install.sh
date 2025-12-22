@@ -50,8 +50,8 @@ curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.g
 tar xzf "master.tar.gz"
 mv wger-master /home/wger/src
 cd /home/wger/src || exit
-$STD pip install -r requirements_prod.txt --ignore-installed
-$STD pip install -e .
+$STD pip install --upgrade pip
+$STD pip install .
 $STD wger create-settings --database-path /home/wger/db/database.sqlite
 
 cat <<'EOF' >> /home/wger/src/settings.py
