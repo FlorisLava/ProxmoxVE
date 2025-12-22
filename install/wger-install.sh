@@ -65,6 +65,7 @@ msg_ok "Virtual environment ready"
 $STD pip install .
 $STD pip install psycopg2-binary
 
+
 # $STD pip install . --ignore-installed --break-system-packages
 # $STD pip install psycopg2-binary --break-system-packages
 
@@ -143,8 +144,23 @@ chown -R wger:wger /home/wger/src
 chown -R wger:www-data /home/wger/static /home/wger/media /home/wger/db
 chmod -R 775 /home/wger/static /home/wger/media /home/wger/db
 
+chmod 755 /home
+chmod 755 /home/wger
+chmod 755 /home/wger/src
+
+
 systemctl enable -q --now wger
 msg_ok "Created Service"
+
+msg_info "Configuring Apache systemd permissions"
+mkdir -p /etc/systemd/system/apache2.service.d
+cat <<EOF >/etc/systemd/system/apache2.service.d/override.conf
+[Service]
+ProtectHome=false
+EOF
+systemctl daemon-reexec
+msg_ok "Apache systemd override applied"
+
 
 msg_info "Creating Celery Worker Service"
 cat <<EOF >/etc/systemd/system/wger-celery.service
@@ -160,11 +176,14 @@ Group=wger
 WorkingDirectory=/home/wger/src
 Environment=DJANGO_SETTINGS_MODULE=settings
 Environment=PYTHONPATH=/home/wger/src
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
 ExecStart=/home/wger/venv/bin/celery -A wger worker -l info
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=full
-ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/home/wger
 Restart=always
 
 [Install]
@@ -189,11 +208,14 @@ Group=wger
 WorkingDirectory=/home/wger/src
 Environment=DJANGO_SETTINGS_MODULE=settings
 Environment=PYTHONPATH=/home/wger/src
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
 ExecStart=/home/wger/venv/bin/celery -A wger beat -l info
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=full
-ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/home/wger
 Restart=always
 
 [Install]
