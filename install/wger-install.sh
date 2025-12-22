@@ -27,8 +27,8 @@ msg_ok "Installed Python"
 
 msg_info "Installing Redis"
 $STD apt install -y redis-server
-systemctl enable --now redis-server
 msg_ok "Installed Redis"
+systemctl enable --now redis-server
 
 redis-cli ping | grep -qP '^PONG$' && msg_ok "Redis is running" || msg_error "Redis is not running"
 
@@ -45,10 +45,10 @@ chmod o+w /home/wger/media
 temp_dir=$(mktemp -d)
 cd "$temp_dir" || exit
 RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
-# TEMP CHANGE FROM $RELEASE TO MAIN
-curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/main.tar.gz" -o "main.tar.gz"
-tar xzf "main.tar.gz"
-mv wger-main /home/wger/src
+# TEMP CHANGE FROM $RELEASE TO MASTER
+curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz" -o "master.tar.gz"
+tar xzf "master.tar.gz"
+mv wger-master /home/wger/src
 cd /home/wger/src || exit
 $STD pip install -r requirements_prod.txt --ignore-installed
 $STD pip install -e .

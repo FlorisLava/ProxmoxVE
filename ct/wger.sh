@@ -35,10 +35,10 @@ function update_script() {
 
     msg_info "Updating $APP to v${RELEASE}"
     temp_file=$(mktemp)
-    # TEMP CHANGE FROM $RELEASE TO MAIN
-    curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/main.tar.gz" -o "$temp_file"
+    # TEMP CHANGE FROM $RELEASE TO MASTER
+    curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz" -o "$temp_file"
     tar xzf "$temp_file"
-    cp -rf wger-main/* /home/wger/src
+    cp -rf wger-master/* /home/wger/src
     cd /home/wger/src || exit
     $STD pip install --upgrade pip
     $STD pip install .
