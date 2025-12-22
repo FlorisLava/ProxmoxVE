@@ -38,6 +38,7 @@ msg_info "Enabling Corepack"
 corepack enable
 corepack prepare npm@10.5.0 --activate
 corepack disable yarn
+corepack disable pnpm
 msg_ok "Corepack enabled"
 
 msg_info "Setting up wger"
