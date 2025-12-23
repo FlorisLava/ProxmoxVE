@@ -23,42 +23,50 @@ function update_script() {
   header_info
   check_container_storage
   check_container_resources
+
   if [[ ! -d /home/wger ]]; then
     msg_error "No ${APP} Installation Found!"
-    exit
+    exit 1
   fi
-  # RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
-  # if [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]] || [[ ! -f /opt/${APP}_version.txt ]]; then
-    msg_info "Stopping Service"
-    systemctl stop wger wger-celery wger-celery-beat 2>/dev/null || true
-    msg_ok "Stopped Service"
 
-    msg_info "Updating $APP to v${RELEASE}"
-    temp_file=$(mktemp)
-    # TEMP CHANGE FROM $RELEASE TO MASTER
-    curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz" -o "$temp_file"
-    tar xzf "$temp_file"
-    cp -rf wger-master/* /home/wger/src
-    cd /home/wger/src || exit
-    $STD pip install . --ignore-installed --break-system-packages
-    $STD python3 manage.py migrate
-    $STD python3 manage.py collectstatic --no-input
-    $STD yarn install
-    $STD yarn build:css:sass
-    rm -rf "$temp_file"
-    echo "${RELEASE}" >/opt/${APP}_version.txt
-    msg_ok "Updated $APP to v${RELEASE}"
+  WGER_HOME="/home/wger"
+  WGER_SRC="${WGER_HOME}/src"
+  WGER_VENV="${WGER_HOME}/venv"
 
-    msg_info "Starting wger Service"
-    systemctl start wger
-    msg_info "Starting Celery Services"
-    systemctl start wger-celery wger-celery-beat 2>/dev/null || true
-    msg_ok "Started Service"
-    msg_ok "Updated successfully!"
-  # else
-  #   msg_ok "No update required. ${APP} is already at v${RELEASE}"
-  # fi
-  exit
+  msg_info "Stopping services"
+  systemctl stop wger-celery wger-celery-beat apache2 2>/dev/null || true
+  msg_ok "Services stopped"
+
+  msg_info "Updating ${APP} source"
+  temp_dir=$(mktemp -d)
+  # TEMP CHANGE FROM $RELEASE TO MASTER
+  curl -fsSL https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz \
+    | tar xz -C "${temp_dir}"
+  rsync -a --delete "${temp_dir}/wger-master/" "${WGER_SRC}/"
+  rm -rf "${temp_dir}"
+  msg_ok "Source updated"
+
+  msg_info "Updating Python dependencies"
+  "${WGER_VENV}/bin/pip" install -U pip setuptools wheel &>/dev/null
+  "${WGER_VENV}/bin/pip" install . &>/dev/null
+  msg_ok "Dependencies updated"
+
+  msg_info "Running database migrations"
+  cd "${WGER_SRC}" || exit 1
+  "${WGER_VENV}/bin/python" manage.py migrate --noinput
+  msg_ok "Database migrated"
+
+  msg_info "Collecting static files"
+  "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
+  msg_ok "Static files collected"
+
+  msg_info "Starting services"
+  systemctl start apache2
+  systemctl start wger-celery wger-celery-beat
+  msg_ok "Services started"
+
+  msg_ok "${APP} updated successfully!"
+  exit 0
 }
 
 start

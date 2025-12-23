@@ -349,6 +349,3 @@ finalize_permissions
 motd_ssh
 customize
 cleanup_lxc
-
-section "Installation Complete"
-msg_ok "wger available at http://$(hostname -I | awk '{print $1}'):${WGER_PORT}"
