@@ -193,18 +193,16 @@ configure_wger() {
 
   $STD wger create-settings --database-path ${WGER_DB}/database.sqlite
 
-  if ! grep -q "CELERY_BROKER_URL" ${WGER_SRC}/settings.py; then
-    cat <<'EOF' >>${WGER_SRC}/settings.py
+  if grep -q "CELERY_BROKER_URL" ${WGER_SRC}/settings.py; then
+    sed -i 's|# CELERY_BROKER_URL|CELERY_BROKER_URL|' "${WGER_SRC}/settings.py"
+    sed -i 's|# CELERY_RESULT_BACKEND|CELERY_RESULT_BACKEND|' "${WGER_SRC}/settings.py"
+  else 
+     # Append lines if not present
+    cat <<'EOF' >> "${WGER_SRC}/settings.py"
 
-#
-# Celery configuration
-#
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Europe/Berlin"
+    # Celery configuration
+    CELERY_BROKER_URL = "redis://localhost:6379/2"
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/2"
 EOF
   fi
 
