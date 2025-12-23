@@ -88,6 +88,7 @@ setup_python_env
 
 msg_info "Installing Python dependencies"
 $STD pip install .
+$STD pip install psycopg2-binary
 msg_ok "Installed Python dependencies"
 
 
