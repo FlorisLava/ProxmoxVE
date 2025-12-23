@@ -241,7 +241,7 @@ EOF
 setup_celery_worker() {
   msg_info "Creating Celery worker service"
 
-  cat <<EOF >/etc/systemd/system/wger-celery.service
+  cat <<EOF >/etc/systemd/system/celery.service
 [Unit]
 Description=wger Celery Worker
 After=network.target redis-server.service
@@ -267,14 +267,14 @@ WantedBy=multi-user.target
 EOF
 
   systemctl daemon-reload
-  systemctl enable --now wger-celery
+  systemctl enable --now celery
   msg_ok "Celery worker running"
 }
 
 setup_celery_beat() {
   msg_info "Creating Celery beat service"
 
-  cat <<EOF >/etc/systemd/system/wger-celery-beat.service
+  cat <<EOF >/etc/systemd/system/celery-beat.service
 [Unit]
 Description=wger Celery Beat
 After=network.target redis-server.service
@@ -299,7 +299,7 @@ ReadWritePaths=${WGER_HOME}
 WantedBy=multi-user.target
 EOF
 
-  systemctl enable --now wger-celery-beat
+  systemctl enable --now celery-beat
   msg_ok "Celery beat running"
 }
 
@@ -317,6 +317,24 @@ finalize_permissions() {
   chmod 755 /home ${WGER_HOME} ${WGER_SRC}
 
   msg_ok "Permissions applied"
+}
+
+create_celery_helper() {
+msg_info "Installing Celery helper command"
+
+cat <<EOF >/usr/local/bin/celery
+#!/usr/bin/env bash
+exec /home/wger/venv/bin/celery "\$@"
+EOF
+
+cat <<EOF >/usr/local/bin/celery-beat
+#!/usr/bin/env bash
+exec /home/wger/venv/bin/celery-beat "\$@"
+EOF
+
+chmod 755 /usr/local/bin/celery-beat
+
+msg_ok "Celery helper installed (celery and celery-beat)"
 }
 
 # --------------------------------------------------
@@ -346,6 +364,7 @@ setup_celery_beat
 
 section "Finalization"
 finalize_permissions
+create_celery_helper
 motd_ssh
 customize
 cleanup_lxc
