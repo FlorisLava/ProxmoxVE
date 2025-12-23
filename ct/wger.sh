@@ -53,7 +53,7 @@ function update_script() {
   msg_info "Updating ${APP} to v${RELEASE}"
 
   msg_info "Stopping services"
-  systemctl stop wger-celery wger-celery-beat apache2 2>/dev/null || true
+  systemctl stop celery celery-beat apache2 2>/dev/null || true
   msg_ok "Services stopped"
 
   msg_info "Downloading release source"
@@ -67,24 +67,25 @@ function update_script() {
   msg_ok "Source updated"
 
   msg_info "Updating Python dependencies"
-  "${WGER_VENV}/bin/pip" install -U pip setuptools wheel &>/dev/null
-  "${WGER_VENV}/bin/pip" install . &>/dev/null
+  cd ${WGER_SRC} || EXIT
+
+  $STD pip install -U pip setuptools wheel &>/dev/null
+  $STD pip install . &>/dev/null
   msg_ok "Dependencies updated"
 
   msg_info "Running database migrations"
-  cd "${WGER_SRC}" || exit 1
-  "${WGER_VENV}/bin/python" manage.py migrate --noinput
+  $STD python manage.py migrate --noinput
   msg_ok "Database migrated"
 
   msg_info "Collecting static files"
-  "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
+  $STD python manage.py collectstatic --noinput
   msg_ok "Static files collected"
 
   echo "${RELEASE}" > "${VERSION_FILE}"
 
   msg_info "Starting services"
   systemctl start apache2
-  systemctl start wger-celery wger-celery-beat
+  systemctl start celery celery-beat
   msg_ok "Services started"
 
   msg_ok "${APP} updated successfully to v${RELEASE}"
