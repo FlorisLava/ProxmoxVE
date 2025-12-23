@@ -13,6 +13,31 @@ setting_up_container
 network_check
 update_os
 
+WGER_USER="wger"
+WGER_HOME="/home/wger"
+WGER_SRC="${WGER_HOME}/src"
+WGER_VENV="${WGER_HOME}/venv"
+WGER_DB="${WGER_HOME}/db"
+WGER_PORT="${WGER_PORT:-3000}"
+
+setup_python_env() {
+  msg_info "Creating Python virtual environment"
+
+  [ -d ${WGER_VENV} ] || python3 -m venv ${WGER_VENV} &>/dev/null
+  source ${WGER_VENV}/bin/activate
+  $STD pip install -U pip setuptools wheel
+
+  msg_ok "Virtual environment ready"
+}
+
+setup_apache_port() {
+    msg_info "Configuring Apache port"
+    sed -i "s/^Listen .*/Listen ${WGER_PORT}/" /etc/apache2/ports.conf || true
+    grep -q "^Listen ${WGER_PORT}$" /etc/apache2/ports.conf || echo "Listen ${WGER_PORT}" >> /etc/apache2/ports.conf
+    msg_ok "Apache configured to listen on port ${WGER_PORT}"
+}
+
+
 msg_info "Installing General Dependencies"
 $STD apt install -y \
   git \
@@ -40,35 +65,26 @@ corepack prepare npm@10.5.0 --activate
 corepack disable yarn
 corepack disable pnpm
 
-WGER_PORT="${WGER_PORT:-3000}"
-msg_info "Configuring Apache port"
-sed -i "s/^Listen .*/Listen ${WGER_PORT}/" /etc/apache2/ports.conf || true
-grep -q "^Listen ${WGER_PORT}$" /etc/apache2/ports.conf || echo "Listen ${WGER_PORT}" >> /etc/apache2/ports.conf
-msg_ok "Apache configured to listen on port ${WGER_PORT}"
-
+setup_apache_port
 
 msg_info "Setting up wger"
-$STD adduser wger --disabled-password --gecos ""
-mkdir /home/wger/db
-touch /home/wger/db/database.sqlite
-chown :www-data -R /home/wger/db
-chmod g+w /home/wger/db /home/wger/db/database.sqlite
-mkdir /home/wger/{static,media}
-chmod o+w /home/wger/media
+id wger &>/dev/null || $STD adduser wger --disabled-password --gecos ""
+mkdir ${WGER_DB}
+touch ${WGER_DB}/database.sqlite
+chown :www-data -R ${WGER_DB}
+chmod g+w ${WGER_DB} ${WGER_DB}/database.sqlite
+mkdir ${WGER_HOME}/{static,media}
+chmod o+w ${WGER_HOME}/media
 temp_dir=$(mktemp -d)
 cd "$temp_dir" || exit
 # RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
 # TEMP CHANGE FROM $RELEASE TO MASTER
 curl -fsSL "https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz" -o "master.tar.gz"
 tar xzf "master.tar.gz"
-mv wger-master /home/wger/src
-cd /home/wger/src || exit
+mv wger-master ${WGER_SRC}
+cd ${WGER_SRC} || exit
 
-msg_info "Creating Python virtual environment"
-python3 -m venv /home/wger/venv
-source /home/wger/venv/bin/activate
-pip install -U pip setuptools wheel
-msg_ok "Virtual environment ready"
+setup_python_env
 
 msg_info "Installing Python dependencies"
 $STD pip install .
@@ -77,10 +93,11 @@ msg_ok "Installed Python dependencies"
 
 
 export DJANGO_SETTINGS_MODULE=settings
-export PYTHONPATH=/home/wger/src
-$STD wger create-settings --database-path /home/wger/db/database.sqlite
+export PYTHONPATH=${WGER_SRC}
+$STD wger create-settings --database-path ${WGER_DB}/database.sqlite
 
-cat <<'EOF' >> /home/wger/src/settings.py
+if ! grep -q "CELERY_BROKER_URL" ${WGER_SRC}/settings.py; then
+cat <<'EOF' >> ${WGER_SRC}/settings.py
 
 #
 # Celery configuration
@@ -92,9 +109,10 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Berlin"
 EOF
+fi
 
-sed -i "s#home/wger/src/media#home/wger/media#g" /home/wger/src/settings.py
-sed -i "/MEDIA_ROOT = '\/home\/wger\/media'/a STATIC_ROOT = '/home/wger/static'" /home/wger/src/settings.py
+sed -i "s#home/wger/src/media#home/wger/media#g" ${WGER_SRC}/settings.py
+sed -i "/MEDIA_ROOT = '\/home\/wger\/media'/a STATIC_ROOT = '${WGER_HOME}/static'" ${WGER_SRC}/settings.py
 $STD wger bootstrap
 $STD python3 manage.py collectstatic
 rm -rf "$temp_dir"
@@ -104,26 +122,26 @@ msg_ok "Finished setting up wger"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/apache2/sites-available/wger.conf
-<Directory /home/wger/src>
+<Directory ${WGER_SRC}>
     <Files wsgi.py>
         Require all granted
     </Files>
 </Directory>
 
-<VirtualHost *${WGER_PORT}>
+<VirtualHost *:${WGER_PORT}>
     WSGIApplicationGroup %{GLOBAL}
-    WSGIDaemonProcess wger python-path=/home/wger/src python-home=/home/wger/venv
+    WSGIDaemonProcess wger python-path=${WGER_SRC} python-home=${WGER_VENV}
     WSGIProcessGroup wger
-    WSGIScriptAlias / /home/wger/src/wger/wsgi.py
+    WSGIScriptAlias / ${WGER_SRC}/wger/wsgi.py
     WSGIPassAuthorization On
 
-    Alias /static/ /home/wger/static/
-    <Directory /home/wger/static>
+    Alias /static/ ${WGER_HOME}/static/
+    <Directory ${WGER_HOME}/static>
         Require all granted
     </Directory>
 
-    Alias /media/ /home/wger/media/
-    <Directory /home/wger/media>
+    Alias /media/ ${WGER_HOME}/media/
+    <Directory ${WGER_HOME}/media>
         Require all granted
     </Directory>
 
@@ -147,13 +165,13 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-chown -R wger:wger /home/wger/src
-chown -R wger:www-data /home/wger/static /home/wger/media /home/wger/db
-chmod -R 775 /home/wger/static /home/wger/media /home/wger/db
+chown -R ${WGER_USER}:wger ${WGER_SRC}
+chown -R ${WGER_USER}:www-data ${WGER_HOME}/static ${WGER_HOME}/media ${WGER_DB}
+chmod -R 775 ${WGER_HOME}/static ${WGER_HOME}/media ${WGER_DB}
 
 chmod 755 /home
-chmod 755 /home/wger
-chmod 755 /home/wger/src
+chmod 755 ${WGER_HOME}
+chmod 755 ${WGER_SRC}
 
 
 systemctl enable -q --now wger
@@ -180,17 +198,17 @@ Requires=redis-server.service
 Type=simple
 User=wger
 Group=wger
-WorkingDirectory=/home/wger/src
+WorkingDirectory=${WGER_SRC}
 Environment=DJANGO_SETTINGS_MODULE=settings
-Environment=PYTHONPATH=/home/wger/src
+Environment=PYTHONPATH=${WGER_SRC}
 Environment=PYTHONUNBUFFERED=1
 StandardOutput=journal
 StandardError=journal
-ExecStart=/home/wger/venv/bin/celery -A wger worker -l info
+ExecStart=${WGER_VENV}/bin/celery -A wger worker -l info
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/home/wger
+ReadWritePaths=${WGER_HOME}
 Restart=always
 
 [Install]
@@ -212,17 +230,17 @@ Requires=redis-server.service
 Type=simple
 User=wger
 Group=wger
-WorkingDirectory=/home/wger/src
+WorkingDirectory=${WGER_SRC}
 Environment=DJANGO_SETTINGS_MODULE=settings
-Environment=PYTHONPATH=/home/wger/src
+Environment=PYTHONPATH=${WGER_SRC}
 Environment=PYTHONUNBUFFERED=1
 StandardOutput=journal
 StandardError=journal
-ExecStart=/home/wger/venv/bin/celery -A wger beat -l info
+ExecStart=${WGER_VENV}/bin/celery -A wger beat -l info
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/home/wger
+ReadWritePaths=${WGER_HOME}
 Restart=always
 
 [Install]
