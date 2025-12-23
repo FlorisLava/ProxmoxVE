@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-msg_info "Installing Dependencies"
+msg_info "Installing General Dependencies"
 $STD apt install -y \
   git \
   apache2 \
@@ -40,6 +40,13 @@ corepack prepare npm@10.5.0 --activate
 corepack disable yarn
 corepack disable pnpm
 
+WGER_PORT="${WGER_PORT:-3000}"
+msg_info "Configuring Apache port"
+sed -i "s/^Listen .*/Listen ${WGER_PORT}/" /etc/apache2/ports.conf || true
+grep -q "^Listen ${WGER_PORT}$" /etc/apache2/ports.conf || echo "Listen ${WGER_PORT}" >> /etc/apache2/ports.conf
+msg_ok "Apache configured to listen on port ${WGER_PORT}"
+
+
 msg_info "Setting up wger"
 $STD adduser wger --disabled-password --gecos ""
 mkdir /home/wger/db
@@ -62,12 +69,12 @@ python3 -m venv /home/wger/venv
 source /home/wger/venv/bin/activate
 pip install -U pip setuptools wheel
 msg_ok "Virtual environment ready"
+
+msg_info "Installing Python dependencies"
 $STD pip install .
 $STD pip install psycopg2-binary
+msg_ok "Installed Python dependencies"
 
-
-# $STD pip install . --ignore-installed --break-system-packages
-# $STD pip install psycopg2-binary --break-system-packages
 
 export DJANGO_SETTINGS_MODULE=settings
 export PYTHONPATH=/home/wger/src
@@ -103,7 +110,7 @@ cat <<EOF >/etc/apache2/sites-available/wger.conf
     </Files>
 </Directory>
 
-<VirtualHost *:80>
+<VirtualHost *${WGER_PORT}>
     WSGIApplicationGroup %{GLOBAL}
     WSGIDaemonProcess wger python-path=/home/wger/src python-home=/home/wger/venv
     WSGIProcessGroup wger
