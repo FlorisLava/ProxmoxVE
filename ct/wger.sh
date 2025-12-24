@@ -43,7 +43,7 @@ function update_script() {
   msg_ok "Services stopped"
 
  
-  msg_info "Downloading master branch (dev mode)"
+  msg_info "Downloading master branch"
   temp_dir=$(mktemp -d)
   curl -fsSL https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz \
     | tar xz -C "${temp_dir}"
@@ -61,26 +61,21 @@ function update_script() {
   fi
   msg_ok "Python virtual environment ready"
 
-
+  cd "${WGER_SRC}" || exit
+  
   msg_info "Updating Python dependencies"
-  cd "${WGER_SRC}" || exit 1
   $STD "${WGER_VENV}/bin/python" -m pip install -U pip setuptools wheel
   $STD "${WGER_VENV}/bin/python" -m pip install .
   msg_ok "Dependencies updated"
 
   msg_info "Running database migrations"
-  cd "${WGER_SRC}" || exit 1
-  env \
-    WGER_SETTINGS="${WGER_SRC}/settings.py" \
-    "${WGER_VENV}/bin/python" manage.py migrate --noinput
+    "${WGER_VENV}/bin/python" python3 manage.py migrate --noinput
   msg_ok "Database migrated"
 
   msg_info "Collecting static files"
-  env \
-    WGER_SETTINGS="${WGER_SRC}/settings.py" \
-    "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
+   "${WGER_VENV}/bin/python" python3 manage.py collectstatic --noinput
   msg_ok "Static files collected"
-  
+
   msg_info "Starting services"
   systemctl start apache2
   systemctl start celery celery-beat
