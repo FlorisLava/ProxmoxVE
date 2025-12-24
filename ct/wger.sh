@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/FlorisCl/ProxmoxVE/main/misc/build.func)
 # Copyright (c) 2021-2025 community-scripts ORG
 # Original Author: Slaviša Arežina (tremor021)
 # Revamped Script: Floris Claessens (FlorisCl)
@@ -25,15 +25,16 @@ function update_script() {
   check_container_storage
   check_container_resources
 
-  if [[ ! -d /home/wger ]]; then
-    msg_error "No ${APP} Installation Found!"
-    exit 1
-  fi
 
   WGER_HOME="/home/wger"
   WGER_SRC="${WGER_HOME}/src"
   WGER_VENV="${WGER_HOME}/venv"
   VERSION_FILE="/opt/${APP}_version.txt"
+
+  if [[ ! -d ${WGER_HOME} ]]; then
+    msg_error "No ${APP} Installation Found!"
+    exit 1
+  fi
 
   msg_info "Checking latest ${APP} release"
   RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest \

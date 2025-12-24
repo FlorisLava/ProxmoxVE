@@ -58,7 +58,7 @@ setup_node() {
   msg_info "Setting up Node.js toolchain"
   NODE_VERSION="22" NODE_MODULE="sass" setup_nodejs
   corepack enable
-  corepack prepare npm@10.5.0 --activate
+  corepack prepare npm --activate
   corepack disable yarn pnpm
   msg_ok "Node.js toolchain ready"
 }
