@@ -37,10 +37,10 @@ function update_script() {
   fi
 
   msg_info "Checking latest ${APP} release"
-  RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest \
-    | grep '"tag_name"' \
-    | cut -d '"' -f4)
-
+  # RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest \
+  #   | grep '"tag_name"' \
+    # | cut -d '"' -f4)
+  RELEASE="null"
   if [[ -z "${RELEASE}" ]]; then
     msg_error "Failed to determine latest release"
     exit 1
