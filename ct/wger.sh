@@ -59,31 +59,29 @@ function update_script() {
     rm -rf "${WGER_VENV}"
     python3 -m venv "${WGER_VENV}"
   fi
-
-msg_ok "Python virtual environment ready"
+  msg_ok "Python virtual environment ready"
 
 
   msg_info "Updating Python dependencies"
   cd "${WGER_SRC}" || exit 1
-  "${WGER_VENV}/bin/python" -m pip install -U pip setuptools wheel
-  "${WGER_VENV}/bin/python" -m pip install .
-
+  $STD "${WGER_VENV}/bin/python" -m pip install -U pip setuptools wheel
+  $STD "${WGER_VENV}/bin/python" -m pip install .
   msg_ok "Dependencies updated"
 
-  msg_info "Preparing Django environment"
-  export DJANGO_SETTINGS_MODULE=settings
-  export PYTHONPATH="${WGER_SRC}"
-  msg_ok "Django environment ready"
-
   msg_info "Running database migrations"
-  "${WGER_VENV}/bin/python" manage.py migrate --noinput
+  cd "${WGER_SRC}" || exit 1
+  env \
+    DJANGO_SETTINGS_MODULE=settings \
+    PYTHONPATH="${WGER_SRC}" \
+    "${WGER_VENV}/bin/python" manage.py migrate --noinput
   msg_ok "Database migrated"
-
+  
   msg_info "Collecting static files"
-  "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
+  env \
+    DJANGO_SETTINGS_MODULE=settings \
+    PYTHONPATH="${WGER_SRC}" \
+    "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
   msg_ok "Static files collected"
-
-  echo "${LATEST_COMMIT}" > "${VERSION_FILE}"
 
   msg_info "Starting services"
   systemctl start apache2
