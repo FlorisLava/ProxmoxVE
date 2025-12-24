@@ -70,6 +70,11 @@ msg_ok "Python virtual environment ready"
 
   msg_ok "Dependencies updated"
 
+  msg_info "Preparing Django environment"
+  export DJANGO_SETTINGS_MODULE=settings
+  export PYTHONPATH="${WGER_SRC}"
+  msg_ok "Django environment ready"
+
   msg_info "Running database migrations"
   "${WGER_VENV}/bin/python" manage.py migrate --noinput
   msg_ok "Database migrated"
