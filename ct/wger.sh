@@ -52,10 +52,22 @@ function update_script() {
   rm -rf "${temp_dir}"
   msg_ok "Source updated"
 
+  msg_info "Ensuring Python virtual environment exists"
+
+  if [[ ! -x "${WGER_VENV}/bin/python" ]]; then
+    msg_warn "Virtual environment missing or broken, recreating"
+    rm -rf "${WGER_VENV}"
+    python3 -m venv "${WGER_VENV}"
+  fi
+
+msg_ok "Python virtual environment ready"
+
+
   msg_info "Updating Python dependencies"
   cd "${WGER_SRC}" || exit 1
-  "${WGER_VENV}/bin/pip" install -U pip setuptools wheel &>/dev/null
-  "${WGER_VENV}/bin/pip" install . &>/dev/null
+  "${WGER_VENV}/bin/python" -m pip install -U pip setuptools wheel
+  "${WGER_VENV}/bin/python" -m pip install .
+
   msg_ok "Dependencies updated"
 
   msg_info "Running database migrations"
