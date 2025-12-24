@@ -69,11 +69,11 @@ function update_script() {
   msg_ok "Dependencies updated"
 
   msg_info "Running database migrations"
-    "${WGER_VENV}/bin/python" python3 manage.py migrate --noinput
+    "${WGER_VENV}/bin/python" manage.py migrate --noinput
   msg_ok "Database migrated"
 
   msg_info "Collecting static files"
-   "${WGER_VENV}/bin/python" python3 manage.py collectstatic --noinput
+   "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
   msg_ok "Static files collected"
 
   msg_info "Starting services"
