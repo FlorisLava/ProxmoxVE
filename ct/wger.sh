@@ -71,18 +71,16 @@ function update_script() {
   msg_info "Running database migrations"
   cd "${WGER_SRC}" || exit 1
   env \
-    DJANGO_SETTINGS_MODULE=settings \
-    PYTHONPATH="${WGER_SRC}" \
+    WGER_SETTINGS="${WGER_SRC}/settings.py" \
     "${WGER_VENV}/bin/python" manage.py migrate --noinput
   msg_ok "Database migrated"
-  
+
   msg_info "Collecting static files"
   env \
-    DJANGO_SETTINGS_MODULE=settings \
-    PYTHONPATH="${WGER_SRC}" \
+    WGER_SETTINGS="${WGER_SRC}/settings.py" \
     "${WGER_VENV}/bin/python" manage.py collectstatic --noinput
   msg_ok "Static files collected"
-
+  
   msg_info "Starting services"
   systemctl start apache2
   systemctl start celery celery-beat
