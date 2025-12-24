@@ -36,8 +36,8 @@ function update_script() {
   fi
 
   msg_info "Checking latest ${APP} commit on main"
-  LATEST_COMMIT=$(curl -fsSL https://api.github.com/repos/wger-project/wger/commits/main \
-    | grep '"sha"' | head -n1 | cut -d '"' -f4)
+  LATEST_COMMIT=$(git ls-remote https://github.com/wger-project/wger.git refs/heads/main | awk '{print $1}')
+
 
   if [[ -z "${LATEST_COMMIT}" ]]; then
     msg_error "Failed to determine latest commit"
