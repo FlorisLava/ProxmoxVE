@@ -40,8 +40,8 @@ install_dependencies() {
     git \
     apache2 \
     libapache2-mod-wsgi-py3 \
-    python3-venv \
-    python3-pip \
+    python3.12-venv \
+    python3.12-pip \
     redis-server \
     rsync
   msg_ok "System dependencies installed"
@@ -169,7 +169,7 @@ setup_python_env() {
   msg_info "Setting up Python virtual environment"
   cd ${WGER_SRC} || EXIT
 
-  [ -d ${WGER_VENV} ] || python3 -m venv ${WGER_VENV} &>/dev/null
+  [ -d ${WGER_VENV} ] || python3.12 -m venv ${WGER_VENV} &>/dev/null
   source ${WGER_VENV}/bin/activate
   $STD pip install -U pip setuptools wheel
 
@@ -180,7 +180,6 @@ install_python_deps() {
   msg_info "Installing Python dependencies"
 
   cd "${WGER_SRC}" || exit
-  python3.12 -m venv /home/wger/venv
   $STD pip install .
   $STD pip install psycopg2-binary
 
@@ -212,7 +211,7 @@ EOF
   sed -i "/MEDIA_ROOT = '\/home\/wger\/media'/a STATIC_ROOT = '${WGER_HOME}/static'" ${WGER_SRC}/settings.py
 
   $STD wger bootstrap
-  $STD python3 manage.py collectstatic
+  $STD python3.12 manage.py collectstatic
 
   msg_ok "wger configured"
 }
