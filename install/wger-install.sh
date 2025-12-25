@@ -180,7 +180,8 @@ install_python_deps() {
   msg_info "Installing Python dependencies"
 
   cd "${WGER_SRC}" || exit
-  $STD pip install ".[celery, redis]"
+  python3.12 -m venv /home/wger/venv
+  $STD pip install .
   $STD pip install psycopg2-binary
 
   msg_ok "Python dependencies installed"
