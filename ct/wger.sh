@@ -41,24 +41,17 @@ function update_script() {
   msg_info "Stopping services"
   systemctl stop celery celery-beat apache2 2>/dev/null || true
   msg_ok "Services stopped"
-
-  # Create temp file for settings
-  cp "${WGER_SRC}/settings.py" /tmp/wger-settings.py 2>/dev/null || true
-
  
   msg_info "Downloading master branch"
   temp_dir=$(mktemp -d)
   curl -fsSL https://github.com/wger-project/wger/archive/refs/heads/master.tar.gz \
     | tar xz -C "${temp_dir}"
 
-  rsync -a --delete "${temp_dir}/wger-master/" "${WGER_SRC}/"
+  rsync -a --delete \
+    --exclude settings.py \
+    "${temp_dir}/wger-master/" "${WGER_SRC}/"
   rm -rf "${temp_dir}"
   msg_ok "Source updated"
-
-  # Restore settings from temp file
-  if [[ -f /tmp/wger-settings.py ]]; then
-    mv /tmp/wger-settings.py "${WGER_SRC}/settings.py"
-  fi
 
   msg_info "Ensuring Python virtual environment exists"
   if [[ ! -x "${WGER_VENV}/bin/python" ]]; then
@@ -79,6 +72,7 @@ function update_script() {
     export DJANGO_SETTINGS_MODULE=settings
     export PYTHONPATH="${WGER_SRC}"
 
+    "${WGER_VENV}/bin/python" manage.py makemigrations
     "${WGER_VENV}/bin/python" manage.py migrate 
   msg_ok "Database migrated"
 
