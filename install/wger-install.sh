@@ -274,6 +274,13 @@ EOF
 }
 
 setup_celery_beat() {
+  msg_info "Preparing Celery Beat schedule directory"
+  mkdir -p /var/lib/wger/celery
+  chown -R wger:wger /var/lib/wger
+  chmod 755 /var/lib/wger
+  chmod 700 /var/lib/wger/celery
+  msg_ok "Celery Beat schedule directory ready"
+
   msg_info "Creating Celery beat service"
 
   cat <<EOF >/etc/systemd/system/celery-beat.service
@@ -290,7 +297,7 @@ WorkingDirectory=${WGER_SRC}
 Environment=DJANGO_SETTINGS_MODULE=settings
 Environment=PYTHONPATH=${WGER_SRC}
 Environment=PYTHONUNBUFFERED=1
-ExecStart=${WGER_VENV}/bin/celery -A wger beat -l info
+ExecStart=${WGER_VENV}/bin/celery -A wger beat -l info --schedule /var/lib/wger/celery/celerybeat-schedule
 Restart=always
 PrivateTmp=true
 NoNewPrivileges=true
