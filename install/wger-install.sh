@@ -159,13 +159,9 @@ fetch_wger_source() {
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/wger-project/wger/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
   # curl -fsSL https://github.com/wger-project/wger/archive/refs/tags/${RELEASE}.tar.gz -o ${RELEASE}.tar.gz
-  # tar xzf ${RELEASE}.tar.gz
-  # mv wger-${RELEASE} ${WGER_SRC}
-
-  # Get refactor-settings branch
-  curl -fsSL https://github.com/wger-project/wger/archive/refs/heads/refactor-settings.tar.gz -o refactor-settings.tar.gz
-  tar xzf refactor-settings.tar.gz
-  mv wger-refactor-settings ${WGER_SRC}
+  curl -fsSL https://github.com/wger-project/wger/archive/refs/heads//feature/refactor-settings.tar.gz -o ${RELEASE}.tar.gz   # Get refactor-settings branch
+  tar xzf ${RELEASE}.tar.gz
+  mv wger-${RELEASE} ${WGER_SRC}
 
   rm -rf "${temp_dir}"
   echo "${RELEASE}" >/opt/wger_version.txt
